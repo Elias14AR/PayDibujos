@@ -17,7 +17,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))?.split("=")[1];
+
     if (!token) {
       router.push("/user/login");
       return;
@@ -35,9 +38,18 @@ export default function AdminPage() {
   }, [router]);
 
   const handleSearch = async () => {
+    const isValidEmail = /^\S+@\S+\.\S+$/.test(searchEmail);
+    if (!isValidEmail) {
+      alert("Por favor ingresa un correo electrónico válido.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))?.split("=")[1];
+
       const res = await fetch(`/api/admin/users?email=${searchEmail}`, {
         headers: {
           Authorization: `Bearer ${token}`,
