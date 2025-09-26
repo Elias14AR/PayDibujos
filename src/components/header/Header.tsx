@@ -18,21 +18,32 @@ export default function Header() {
   const [user, setUser] = useState<{ email: string; role: string } | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))?.split("=")[1];
+
     if (token) {
       try {
         const decoded = jwtDecode<TokenPayload>(token);
+        const currentTime = Math.floor(Date.now() / 1000); // Tiempo actual en segundos
+        if (decoded.exp < currentTime) {
+          // Si el token ha expirado, eliminarlo y redirigir a login
+          document.cookie = "token=; Max-Age=0; path=/"; // Eliminar token
+          router.push("/user/login");
+          return;
+        }
         setUser({ email: decoded.email, role: decoded.role });
       } catch (err) {
         console.error("Token inválido:", err);
-        localStorage.removeItem("token");
+        document.cookie = "token=; Max-Age=0; path=/"; // Eliminar token
         setUser(null);
       }
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    // Eliminar el token de las cookies al hacer logout
+    document.cookie = "token=; Max-Age=0; path=/";
     setUser(null);
     router.push("/");
   };
