@@ -31,6 +31,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
+    const currentTime = Math.floor(Date.now() / 1000); // Tiempo actual en segundos
+    if (decoded.exp < currentTime) {
+      return NextResponse.json({ error: "Token expirado" }, { status: 401 });
+    }
+
     if (decoded.role !== "admin") {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
@@ -39,7 +44,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Falta el parámetro email" }, { status: 400 });
     }
 
-    const users = await User.find({ email: { $regex: email, $options: "i" } });
+    const sanitizedEmail = email.trim().toLowerCase(); // Sanea el email
+    const users = await User.find({ email: { $regex: sanitizedEmail, $options: "i" } });
+
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error en /api/admin/users:", error);
